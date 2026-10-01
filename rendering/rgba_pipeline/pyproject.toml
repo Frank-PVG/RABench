@@ -1,0 +1,22 @@
+[project]
+name = "rgba-pipeline"
+version = "0.1.0"
+description = "Reproducible Blender/Cycles RGBA scene construction and validation"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26", "Pillow>=10", "OpenEXR>=3.3", "jsonschema>=4.23"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+rgba-pipeline = "rgba_pipeline.cli:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["rgba_pipeline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

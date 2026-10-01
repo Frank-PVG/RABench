@@ -1,0 +1,46 @@
+# Python environments, caches, and build metadata
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Machine-specific runtime metadata and logs
+environment.json
+*.log
+
+# Downloaded assets and generated asset metadata
+assets/raw/
+assets/prepared/
+assets/asset_manifest.jsonl
+assets/download_ledger.jsonl
+assets/fetch_result.json
+assets/*.tmp
+
+# Experiment runs and rendered 3D scenes
+runs/
+*.blend
+*.blend1
+*.glb
+*.gltf
+*.obj
+*.mtl
+*.fbx
+*.stl
+*.ply
+
+# Rendered images and temporary files
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.tif
+*.tiff
+*.hdr
+*.exr
+*.tmp
+.DS_Store

@@ -1,0 +1,23 @@
+[
+  {
+    "asset_id": "asset_a",
+    "uid": "09032fd39ff343a8900ed9969835151b",
+    "url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-154/09032fd39ff343a8900ed9969835151b.glb",
+    "license": "CC0-1.0",
+    "source_page": "https://sketchfab.com/3d-models/09032fd39ff343a8900ed9969835151b"
+  },
+  {
+    "asset_id": "asset_b",
+    "uid": "31139a065546483588ec923fe4e4361d",
+    "url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-130/31139a065546483588ec923fe4e4361d.glb",
+    "license": "CC-BY-4.0",
+    "source_page": "https://sketchfab.com/3d-models/31139a065546483588ec923fe4e4361d"
+  },
+  {
+    "asset_id": "asset_c",
+    "uid": "e5e87ddbf3f6470384bef58431351e2a",
+    "url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-036/e5e87ddbf3f6470384bef58431351e2a.glb",
+    "license": "CC-BY-4.0",
+    "source_page": "https://sketchfab.com/3d-models/e5e87ddbf3f6470384bef58431351e2a"
+  }
+]
