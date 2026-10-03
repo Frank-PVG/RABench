@@ -1,0 +1,99 @@
+{
+  "version": "p1-v1",
+  "presets": {
+    "blue_wall": {
+      "blend_file": "assets/scenes/blue_wall/blue_wall.blend",
+      "frame": 5,
+      "remove_objects": [
+        "Camera_01",
+        "Camera_01_strap",
+        "CheeseBox_01",
+        "CheeseBox_01_lid"
+      ],
+      "anchor": [
+        0.22,
+        -0.1,
+        0.862
+      ],
+      "max_size_m": 0.3,
+      "camera_basis": "blue_wall",
+      "fill_lights": [
+        {
+          "id": "hero_fill",
+          "type": "AREA",
+          "location": [
+            0.1,
+            -0.6,
+            1.7
+          ],
+          "energy": 12,
+          "size": 0.75
+        }
+      ],
+      "exposure": 0.3
+    },
+    "pawn_shop": {
+      "blend_file": "assets/scenes/pawn_shop/pawn_shop.blend",
+      "frame": 5,
+      "remove_objects": [
+        "marble_bust_01",
+        "potted_plant_04"
+      ],
+      "anchor": [
+        5.075,
+        -0.355,
+        0.687
+      ],
+      "max_size_m": 0.3,
+      "camera_basis": "pawn_shop",
+      "fill_lights": [
+        {
+          "id": "hero_fill",
+          "type": "AREA",
+          "location": [
+            4.6,
+            -0.8,
+            1.6
+          ],
+          "energy": 10,
+          "size": 0.6
+        }
+      ],
+      "exposure": 0.5
+    },
+    "the_shed": {
+      "blend_file": "assets/scenes/the_shed/the_shed/the_shed.blend",
+      "frame": 5,
+      "remove_objects": [
+        "shed_dust_scatter",
+        "metal_tool_chest*",
+        "vintage_hand_drill*",
+        "wooden_hammer_01.001",
+        "ratchet_wrench.002",
+        "hand_plane_no4.001",
+        "measuring_tape_01.002"
+      ],
+      "anchor": [
+        0.6,
+        -0.57,
+        0.84
+      ],
+      "max_size_m": 0.36,
+      "camera_basis": "the_shed",
+      "fill_lights": [
+        {
+          "id": "hero_fill",
+          "type": "AREA",
+          "location": [
+            -0.2,
+            -0.35,
+            1.75
+          ],
+          "energy": 25,
+          "size": 0.65
+        }
+      ],
+      "exposure": 0
+    }
+  }
+}

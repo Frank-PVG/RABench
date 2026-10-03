@@ -1,5 +1,6 @@
 # Python environments, caches, and build metadata
 .venv/
+.runtime/
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -16,6 +17,9 @@ environment.json
 # Downloaded assets and generated asset metadata
 assets/raw/
 assets/prepared/
+assets/scenes/
+assets/materials/
+assets/*.inspection.json
 assets/asset_manifest.jsonl
 assets/download_ledger.jsonl
 assets/fetch_result.json

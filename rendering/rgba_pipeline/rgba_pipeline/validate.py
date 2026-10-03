@@ -144,6 +144,9 @@ def physical_checks(sample_root: Path) -> tuple[list[str], dict[str, float]]:
 
 def validate_sample(sample_root: Path) -> dict[str, Any]:
     recipe = read_json(sample_root / "scene_recipe.json")
+    if recipe.get('isolation'):
+        from .isolation import validate_isolated_output
+        return validate_isolated_output(sample_root, recipe)
     is_core = recipe["background_protocol"]["mode"] == "core"
     errors, metrics = core_checks(sample_root) if is_core else physical_checks(sample_root)
     interaction_errors, interaction_metrics = interaction_checks(sample_root, recipe) if is_core else ([], {})
@@ -164,6 +167,37 @@ def validate_sample(sample_root: Path) -> dict[str, Any]:
 
 
 def calibration_checks(run: Path) -> dict[str, Any]:
+    experiment = read_json(run / "experiment.json") if (run / "experiment.json").exists() else {}
+    if experiment.get("suite") == "template_pbr_v1":
+        # Reuse the established empty-film and opaque-target gates. The small
+        # template suite contains no veil/coverage-film calibration specimens.
+        checks: list[dict[str, Any]] = []
+        errors: list[str] = []
+        empty = run / "calibration" / "empty_core" / "alpha.exr"
+        if empty.exists():
+            peak = float(np.max(np.abs(read_exr(empty)[:, :, 0])))
+            checks.append({"name": "empty_core_background", "max_abs_alpha": peak, "pass": peak <= 1e-5})
+        else:
+            errors.append("missing empty Core calibration render")
+        for path in sorted((run / "recipes").glob("*.json")):
+            recipe = read_json(path)
+            if recipe["background_protocol"]["mode"] != "core":
+                continue
+            sid = recipe["identity"]["sample_id"]
+            opaque = run / "samples" / sid / "joint" / "alpha.exr"
+            if not opaque.exists():
+                errors.append(f"missing opaque calibration render {sid}")
+                continue
+            a = read_exr(opaque)[:, :, 0]; support = a > .99
+            err = float(np.max(np.abs(a[support] - 1.0))) if support.any() else float("inf")
+            checks.append({"name": f"opaque_target_alpha_{sid}", "support_fraction": float(support.mean()),
+                           "max_abs_error": err, "pass": bool(err <= .02)})
+        errors.extend(check["name"] for check in checks if not check["pass"])
+        result = {"schema_version": "calibration_template_v1", "status": "pass" if not errors else "fail",
+                  "checks": checks, "errors": errors,
+                  "not_applicable": ["veil_alpha_over", "thin_film_effective_opacity"]}
+        write_json(run / "calibration.json", result)
+        return result
     expansion_anchor = run / "recipes" / "SC01_L1_C1.json"
     if expansion_anchor.exists():
         checks: list[dict[str, Any]] = []

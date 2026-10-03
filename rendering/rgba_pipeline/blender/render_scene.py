@@ -4,6 +4,14 @@ import json, math, os, sys, time
 from pathlib import Path
 import bpy
 from mathutils import Vector
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from scene_templates import load_template
+from render_export import save_render_buffers
+from geometry_support import slot_bounds, check_placement
+from pbr_materials import setmat
+from object_builder import build_object
+from camera_support import create_camera, camera_record
+from isolation_support import empty_scene, configure_isolation
 
 def arg(name):
     args = sys.argv[sys.argv.index("--") + 1:]
@@ -36,173 +44,54 @@ def gpu(scene):
     raise RuntimeError("Cycles GPU unavailable: "+" | ".join(errs))
 
 def setup():
-    bpy.ops.object.select_all(action="SELECT"); bpy.ops.object.delete(use_global=False)
+    isolated = VARIANT == 'isolated_object'
+    if isolated:
+        empty_scene(recipe['isolation'])
+    elif recipe.get('scene_template'):
+        semantic['__scene_environment__'] = load_template(recipe['scene_template'])
+        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection
+    else:
+        bpy.ops.object.select_all(action="SELECT"); bpy.ops.object.delete(use_global=False)
     scene=bpy.context.scene; cfg=recipe["render"]
-    scene.render.engine="CYCLES"; scene.render.resolution_x=cfg["resolution"]; scene.render.resolution_y=cfg["resolution"]; scene.render.resolution_percentage=100
-    scene.render.film_transparent=True; scene.cycles.samples=cfg["samples"]; scene.cycles.seed=recipe["seeds"]["render"]; scene.cycles.use_denoising=False; scene.cycles.use_adaptive_sampling=False
+    resolution=cfg['resolution']; width,height=resolution if isinstance(resolution,list) else (resolution,resolution)
+    scene.render.engine="CYCLES"; scene.render.resolution_x=width; scene.render.resolution_y=height; scene.render.resolution_percentage=100
+    scene.render.pixel_aspect_x=1.0;scene.render.pixel_aspect_y=1.0
+    scene.render.film_transparent=VARIANT not in {'scene_full','scene_without_target'}; scene.cycles.samples=cfg["samples"]; scene.cycles.seed=recipe["seeds"]["render"]; scene.cycles.use_denoising=cfg.get('denoise',False); scene.cycles.use_adaptive_sampling=cfg.get('adaptive_sampling',False)
+    if hasattr(scene.cycles, 'use_light_tree'): scene.cycles.use_light_tree=True
+    scene.cycles.caustics_reflective=cfg.get('caustics_reflective',True)
+    scene.cycles.caustics_refractive=cfg.get('caustics_refractive',True)
+    scene.render.threads_mode='FIXED'; scene.render.threads=cfg.get('threads',8)
     scene.cycles.max_bounces=cfg["max_bounces"]; scene.cycles.transparent_max_bounces=cfg["transparent_bounces"]; scene.cycles.transmission_bounces=cfg["transmission_bounces"]; scene.cycles.sample_clamp_direct=cfg.get("clamp_direct",0); scene.cycles.sample_clamp_indirect=cfg.get("clamp_indirect",0)
     if hasattr(scene.render,"filter_type"): scene.render.filter_type="BOX"
-    scene.render.image_settings.color_mode="RGBA"; scene.render.image_settings.color_depth="16"; scene.view_settings.view_transform="Standard"; scene.view_settings.look="None"
-    scene.world.use_nodes=True; bg=scene.world.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value=(*recipe["environment"]["world_color"],1); bg.inputs["Strength"].default_value=.25
+    scene.render.image_settings.color_mode="RGBA"; scene.render.image_settings.color_depth="16"; scene.view_settings.view_transform=cfg.get('view_transform','Standard'); scene.view_settings.look="None"
+    scene.view_settings.exposure=cfg.get('exposure',0.0)
+    if not isolated and not recipe.get('scene_template'):
+        if scene.world is None: scene.world=bpy.data.worlds.new('Environment')
+        scene.world.use_nodes=True; bg=scene.world.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value=(*recipe["environment"]["world_color"],1); bg.inputs["Strength"].default_value=.25
     device=gpu(scene); c=recipe["camera"]
-    bpy.ops.object.camera_add(location=c["location"]); cam=bpy.context.object; cam.name="Camera"; cam.data.lens=c["lens_mm"]; cam.data.sensor_width=c["sensor_width_mm"]; cam.data.clip_start=c["clip_start"]; cam.data.clip_end=c["clip_end"]; look(cam,c["look_at"]); scene.camera=cam
-    for item in recipe["environment"]["lights"]:
+    create_camera(c)
+    for item in ([] if isolated else recipe["environment"].get("lights",[])):
         bpy.ops.object.light_add(type=item["type"],location=item["location"]); light=bpy.context.object; light.name="ENV_"+item["id"]; light.data.energy=item["energy"]; light.data.shape="DISK"; light.data.size=item["size"]; look(light,c["look_at"])
     return scene,device
 
-def material(name,spec):
-    mat=bpy.data.materials.new(name); mat.use_nodes=True; t=mat.node_tree; t.nodes.clear(); out=t.nodes.new("ShaderNodeOutputMaterial"); p=spec["preset"]
-    if p=="opaque_principled":
-        n=t.nodes.new("ShaderNodeBsdfPrincipled"); n.inputs["Base Color"].default_value=spec.get("base_color",[.8,.8,.8,1]); n.inputs["Roughness"].default_value=spec.get("roughness",.5); n.inputs["Metallic"].default_value=spec.get("metallic",0.0); t.links.new(n.outputs[0],out.inputs["Surface"])
-    elif p=="neutral_thin_coverage":
-        mix=t.nodes.new("ShaderNodeMixShader"); mix.inputs[0].default_value=spec["coverage"]; a=t.nodes.new("ShaderNodeBsdfTransparent"); b=t.nodes.new("ShaderNodeBsdfDiffuse"); b.inputs["Color"].default_value=spec.get("base_color",[.78,.78,.78,1]); t.links.new(a.outputs[0],mix.inputs[1]); t.links.new(b.outputs[0],mix.inputs[2]); t.links.new(mix.outputs[0],out.inputs["Surface"])
-    elif p=="glass":
-        n=t.nodes.new("ShaderNodeBsdfGlass"); n.inputs["IOR"].default_value=spec["ior"]; n.inputs["Roughness"].default_value=spec.get("roughness",0); t.links.new(n.outputs[0],out.inputs["Surface"])
-    elif p=="liquid":
-        n=t.nodes.new("ShaderNodeBsdfGlass"); n.inputs["IOR"].default_value=spec["ior"]; t.links.new(n.outputs[0],out.inputs["Surface"]); v=t.nodes.new("ShaderNodeVolumeAbsorption"); v.inputs["Color"].default_value=(*spec["absorption_color"],1); v.inputs["Density"].default_value=spec["absorption_density"]; t.links.new(v.outputs[0],out.inputs["Volume"])
-    else: raise RuntimeError("unknown material "+p)
-    return mat
-def apply_source_surface_overrides(meshes,overrides,asset_id):
-    # Change only requested shader channels while retaining downloaded image maps.
-    for mesh in meshes:
-        for material in mesh.data.materials:
-            if not material or not material.use_nodes: continue
-            for shader in (n for n in material.node_tree.nodes if n.type=="BSDF_PRINCIPLED"):
-                if "metallic" in overrides: shader.inputs["Metallic"].default_value=float(overrides["metallic"])
-                if "roughness" in overrides: shader.inputs["Roughness"].default_value=float(overrides["roughness"])
-                if "base_color_tint" in overrides:
-                    socket=shader.inputs["Base Color"]
-                    links=list(socket.links)
-                    if links:
-                        source=links[0].from_socket
-                        for link in list(socket.links): material.node_tree.links.remove(link)
-                        gray=material.node_tree.nodes.new("ShaderNodeRGBToBW")
-                        mix=material.node_tree.nodes.new("ShaderNodeMixRGB")
-                        mix.blend_type="MULTIPLY"; mix.inputs[0].default_value=1.0
-                        mix.inputs[2].default_value=(*overrides["base_color_tint"][:3],1.0)
-                        material.node_tree.links.new(source,gray.inputs[0])
-                        material.node_tree.links.new(gray.outputs[0],mix.inputs[1])
-                        material.node_tree.links.new(mix.outputs[0],socket)
-                    else:
-                        socket.default_value=(*overrides["base_color_tint"][:3],1.0)
 
 
-def setmat(objs,spec,name):
-    m=material(name,spec)
-    for o in objs:
-        if o.type in {"MESH","CURVE"}: o.data.materials.clear(); o.data.materials.append(m)
 def tag(oid,objs): semantic[oid]=objs; [o.__setitem__("semantic_object_id",oid) for o in objs]
-def asset(s):
-    before=set(bpy.data.objects)
-    suffix=Path(s["asset_path"]).suffix.lower()
-    if suffix in {".glb", ".gltf"}: bpy.ops.import_scene.gltf(filepath=s["asset_path"])
-    elif suffix == ".obj": bpy.ops.wm.obj_import(filepath=s["asset_path"])
-    else: raise RuntimeError(f"unsupported asset format {suffix!r} for {s['id']}")
-    imported=[o for o in bpy.data.objects if o not in before]; meshes=[o for o in imported if o.type=="MESH"]
-    if not meshes: raise RuntimeError("asset import had no meshes")
-    # Bake GLB node transforms into mesh data without replacing source materials.
-    world_matrices=[o.matrix_world.copy() for o in meshes]
-    world_vertices=[]
-    for o,matrix in zip(meshes,world_matrices):
-        world_vertices.append((o,matrix,[matrix @ v.co for v in o.data.vertices]))
-    lo=Vector(tuple(min(v[i] for _,_,vs in world_vertices for v in vs) for i in range(3))); hi=Vector(tuple(max(v[i] for _,_,vs in world_vertices for v in vs) for i in range(3)))
-    extent=max(hi-lo)
-    if not math.isfinite(extent) or extent <= 1e-8: raise RuntimeError(f"asset {s['id']} has invalid bounds")
-    normalization=s.get("normalization")
-    if normalization:
-        scale=float(normalization["scale"])
-        offset=Vector(tuple(float(x) for x in normalization["translate"]))
-        if not math.isfinite(scale) or scale <= 0 or not all(math.isfinite(x) for x in offset):
-            raise RuntimeError(f"asset {s['id']} has invalid saved normalization")
-    else:
-        scale=.20/extent; offset=Vector((-(lo.x+hi.x)/2, -(lo.y+hi.y)/2, -lo.z))
-    for o,matrix,vs in world_vertices:
-        # Imported node instances can share one mesh datablock; normalization is per instance.
-        o.data=o.data.copy()
-        o.parent=None; o.matrix_world.identity(); o.data.transform(matrix)
-        for vertex,point in zip(o.data.vertices,vs): vertex.co=(point+offset)*scale
-        o.data.update()
-    for o in imported:
-        if o.type in {"CAMERA","LIGHT"}: bpy.data.objects.remove(o,do_unlink=True)
-    parent=bpy.data.objects.new("GROUP_"+s["id"],None); bpy.context.collection.objects.link(parent)
-    for o in meshes:o.parent=parent
-    x=s["transform"]; parent.location=x["location"]; parent.rotation_euler=x["rotation"]; parent.scale=x["scale"]
-    policy=s.get("material_policy","explicit_override")
-    if policy=="explicit_override": setmat(meshes,s["material"],"MAT_"+s["id"])
-    elif policy=="preserve_source":
-        apply_source_surface_overrides(meshes,s.get("surface_overrides",{}),s["id"])
-        # The original downloaded image maps stay attached and are packed into
-        # the portable .blend deliverable without changing shader values.
-        packed_names=set()
-        for mesh in meshes:
-            if mesh.type!="MESH": continue
-            for source_material in mesh.data.materials:
-                if not source_material or not source_material.use_nodes or not source_material.node_tree: continue
-                for node in source_material.node_tree.nodes:
-                    image=node.image if node.type=="TEX_IMAGE" else None
-                    if not image or image.name in packed_names: continue
-                    packed_names.add(image.name)
-                    if image.source=="FILE" and not image.packed_file: image.pack()
-    else: raise RuntimeError(f"unknown material policy {policy!r} for {s['id']}")
-    return [parent,*meshes]
-def box(s):
-    bpy.ops.mesh.primitive_cube_add(location=s["transform"]["location"]); o=bpy.context.object; o.name=s["id"]; o.dimensions=s["geometry"]["size"]; o.rotation_euler=s["transform"]["rotation"]; bpy.ops.object.transform_apply(location=False,rotation=False,scale=True); b=o.modifiers.new("rounded_edges","BEVEL"); b.width=s["geometry"].get("bevel",0); b.segments=3; setmat([o],s["material"],"MAT_"+s["id"]); return[o]
-def veil(s):
-    # The veil is actual opaque woven microgeometry. Fractional alpha arises from subpixel coverage,
-    # which preserves the Core alpha-over relation across independently rendered backplates.
-    g=s["geometry"]; n=g["grid"]; verts=[]; faces=[]; width=g["width"]; height=g["height"]
-    spacing=min(width,height)/n; strand=spacing*(1-math.sqrt(1-g["coverage"]))
-    def fold(x,z): return g["fold_amplitude"]*math.sin(2.5*math.pi*x/width+g.get("fold_phase",0))*math.cos(math.pi*z/height)
-    def quad(points):
-        base=len(verts); verts.extend(points); faces.append((base,base+1,base+2,base+3))
-    # Warp and weft strips provide the requested hanging, folded veil while leaving true holes.
-    for i in range(n+1):
-        x=-width/2+i*width/n; half=strand/2
-        quad([(x-half,fold(x-half,-height/2),-height/2),(x+half,fold(x+half,-height/2),-height/2),(x+half,fold(x+half,height/2),height/2),(x-half,fold(x-half,height/2),height/2)])
-    for i in range(n+1):
-        z=-height/2+i*height/n; half=strand/2
-        quad([(-width/2,fold(-width/2,z-half)+.00015,z-half),(width/2,fold(width/2,z-half)+.00015,z-half),(width/2,fold(width/2,z+half)+.00015,z+half),(-width/2,fold(-width/2,z+half)+.00015,z+half)])
-    me=bpy.data.meshes.new(s["id"]); me.from_pydata(verts,[],faces); ob=bpy.data.objects.new(s["id"],me); bpy.context.collection.objects.link(ob); ob.location=s["transform"]["location"]; ob.rotation_euler=s["transform"]["rotation"]; setmat([ob],s["material"],"MAT_"+s["id"]); return[ob]
-def sphere(s):
-    g=s["geometry"]
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=g.get("segments",48), ring_count=g.get("rings",24), radius=g["radius"], location=s["transform"]["location"])
-    o=bpy.context.object; o.name=s["id"]; o.rotation_euler=s["transform"]["rotation"]
-    for face in o.data.polygons: face.use_smooth=True
-    setmat([o],s["material"],"MAT_"+s["id"])
-    return[o]
 
-def thin_film(s):
-    g=s["geometry"]
-    bpy.ops.mesh.primitive_cube_add(location=s["transform"]["location"])
-    o=bpy.context.object; o.name=s["id"]; o.dimensions=(g["width"],g.get("thickness",0.0008),g["height"])
-    o.rotation_euler=s["transform"]["rotation"]
-    bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-    setmat([o],s["material"],"MAT_"+s["id"])
-    return[o]
 
-def lathe(name,profile):
-    seg=96; vs=[]; fs=[]
-    for r,z in profile:
-        for i in range(seg): a=2*math.pi*i/seg;vs.append((r*math.cos(a),r*math.sin(a),z))
-    for j in range(len(profile)-1):
-        for i in range(seg): a=j*seg+i;b=j*seg+(i+1)%seg;fs.append((a,b,b+seg,a+seg))
-    me=bpy.data.meshes.new(name);me.from_pydata(vs,[],fs);ob=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(ob);return ob
-def cup(s):
-    g=s["geometry"];r=g["outer_radius"];h=g["height"];w=g["wall"];b=g["bottom"];o=lathe(s["id"],[(0,0),(r,0),(r,h),(r-w,h),(r-w,b),(0,b)]);setmat([o],s["material"],"MAT_"+s["id"]);return[o]
-def liquid(s):
-    g=s["geometry"];o=lathe(s["id"],[(0,0),(g["radius"],0),(g["radius"],g["height"]),(0,g["height"])]);o.location=s["transform"]["location"];setmat([o],s["material"],"MAT_"+s["id"]);return[o]
-def straw(s):
-    cu=bpy.data.curves.new(s["id"],"CURVE");cu.dimensions="3D";cu.bevel_depth=s["geometry"]["radius"];cu.bevel_resolution=4;sp=cu.splines.new("BEZIER");pts=s["geometry"]["points"];sp.bezier_points.add(len(pts)-1)
-    for p,c in zip(sp.bezier_points,pts):p.co=c;p.handle_left_type="AUTO";p.handle_right_type="AUTO"
-    o=bpy.data.objects.new(s["id"],cu);bpy.context.collection.objects.link(o);setmat([o],s["material"],"MAT_"+s["id"]);return[o]
 def build():
-    builders={"rounded_box":box,"sphere":sphere,"veil":veil,"thin_film":thin_film,"cup":cup,"liquid":liquid,"straw":straw}
     for s in recipe["objects"]:
-        k=s.get("geometry",{}).get("type");objs=asset(s) if s["role"]=="asset" else builders[k](s);tag(s["id"],objs)
+        objs=build_object(s);tag(s["id"],objs)
     for oid in recipe["sets"].get("ENVIRONMENT",[]):
         if oid not in semantic: raise RuntimeError(f"environment set references unknown object {oid}")
         for o in semantic[oid]:
-            if o.type in {"MESH","CURVE"}: o.visible_camera=False
+            if o.type in {"MESH","CURVE","VOLUME"}: o.visible_camera=bool(o.get('_rgba_original_camera_visibility',True)) if VARIANT in {'scene_full','scene_without_target'} else False
+    if recipe.get('scene_template'):
+        (OUT/'placement.json').write_text(json.dumps({oid:slot_bounds(semantic[oid]) for oid in recipe['sets']['TARGET'] if any(o.type=='MESH' for o in semantic[oid])},indent=2))
+        if VARIANT == 'joint':
+            checks = check_placement(recipe, semantic)
+            (OUT/'placement_checks.json').write_text(json.dumps(checks, indent=2))
+            if checks['errors']: raise RuntimeError('; '.join(checks['errors']))
 def visible(oid,on):
     for o in semantic[oid]:o.hide_render=not on
 
@@ -267,30 +156,7 @@ def background(kind,mode):
     p.data.materials.append(mat);return p
 
 def save(out):
-    out.mkdir(parents=True,exist_ok=True);sc=bpy.context.scene;res=bpy.data.images["Render Result"]
-    # Blender 5.2 does not expose Render Result pixels. Round-trip the exact render buffer through a temporary linear EXR.
-    raw=out/"_render_straight.exr";sc.render.image_settings.file_format="OPEN_EXR";sc.render.image_settings.color_mode="RGBA";sc.render.image_settings.color_depth="32";res.save_render(str(raw),scene=sc)
-    source=bpy.data.images.load(str(raw),check_existing=False);px=list(source.pixels[:]);w,h=source.size;p=[];a=[];straight=[]
-    for i in range(0,len(px),4):
-        # A saved OpenEXR is read back by Blender as premultiplied pixels. Do not
-        # multiply RGB by alpha again: that would turn P into alpha*P for thin
-        # geometry. The PNG compatibility image is the safely unpremultiplied F.
-        r,g,b,x=px[i:i+4]
-        # Keep sub-threshold coverage consistent across premultiplied RGB,
-        # alpha, and straight RGBA. Cycles can leave tiny camera-path values in
-        # pixels the dataset QA classifies as transparent, violating P = alpha*F.
-        if x < 1e-4:
-            r=g=b=x=0.0
-        p.extend((r,g,b,x));a.extend((x,x,x,1));straight.extend((r/x if x>1e-8 else 0,g/x if x>1e-8 else 0,b/x if x>1e-8 else 0,x))
-    def im(n,v,alpha):z=bpy.data.images.new(n,w,h,alpha=alpha,float_buffer=True);z.pixels.foreach_set(v);return z
-    pi=im("Premult",p,True);ai=im("Alpha",a,True);si=im("Straight",straight,True);sc.render.image_settings.file_format="OPEN_EXR";sc.render.image_settings.color_mode="RGBA";sc.render.image_settings.color_depth="32";pi.save_render(str(out/"linear_premult.exr"),scene=sc);sc.render.image_settings.color_mode="RGB";ai.save_render(str(out/"alpha.exr"),scene=sc);sc.render.image_settings.file_format="PNG";sc.render.image_settings.color_mode="RGBA";sc.render.image_settings.color_depth="8";si.save_render(str(out/"straight_rgba.png"),scene=sc);sc.render.image_settings.color_mode="RGB";ai.save_render(str(out/"alpha_preview.png"),scene=sc)
-    for bg,n in ((0,"preview_black.png"),(1,"preview_white.png"),(.55,"preview_checker.png")):
-        vals=[]
-        for i in range(0,len(p),4):
-            r,g,b,x=p[i:i+4];q=bg if n!="preview_checker.png" else (.35 if ((i//4//w//32+(i//4)%w//32)%2) else .75);vals.extend((r+q*(1-x),g+q*(1-x),b+q*(1-x),1))
-        z=im(n,vals,False);sc.render.image_settings.color_mode="RGB";z.save_render(str(out/n),scene=sc);bpy.data.images.remove(z)
-    for z in (pi,ai,si,source):bpy.data.images.remove(z)
-    raw.unlink()
+    save_render_buffers(out,{**recipe['render'],'context_output':VARIANT in {'scene_full','scene_without_target'}})
 def render(out):bpy.ops.render.render(write_still=False);save(out)
 def occlusion_depth(out):
     sc=bpy.context.scene
@@ -328,7 +194,16 @@ def main():
     _,dev=setup();build();target=recipe["sets"]["TARGET"];record={"variant":VARIANT,"probe":PROBE or None,"device":dev,"started_at":time.time(),"sample_id":recipe["identity"]["sample_id"]}
     if VARIANT == "joint":
         bpy.ops.wm.save_as_mainfile(filepath=str(OUT.parent/"scene.blend"))
-    if VARIANT in {"joint","physical_full"}:
+    if VARIANT == 'isolated_object':
+        audit = configure_isolation(recipe, semantic[recipe['isolation']['object_id']])
+        (OUT/'isolation.json').write_text(json.dumps(audit, indent=2))
+        bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'scene.blend'))
+        render(OUT)
+    elif VARIANT in {'scene_full','scene_without_target'}:
+        (OUT/'camera.json').write_text(json.dumps(camera_record(bpy.context.scene.camera),indent=2))
+        if VARIANT=='scene_without_target': [visible(x,False) for x in target]
+        render(OUT)
+    elif VARIANT in {"joint","physical_full"}:
         if VARIANT=="physical_full":background(PROBE or "checker_fine","physical")
         render(OUT)
     elif VARIANT=="without_target":

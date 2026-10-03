@@ -56,6 +56,13 @@ def _download_totals(run: Path) -> dict[str, int]:
 def make_report(run: Path) -> Path:
     run = Path(run).resolve()
     experiment = read_json(run / "experiment.json") if (run / "experiment.json").exists() else {}
+    if experiment.get('suite') == 'p1_pairs_v1':
+        from .p1_report import make_p1_report
+        return make_p1_report(run, experiment)
+    if experiment.get('suite') == 'isolated_objects_v1':
+        return make_isolation_report(run)
+    if experiment.get('suite') == 'template_pbr_v1':
+        return make_template_report(run, experiment)
     plan = _jsonl(run / "scene_plan.jsonl")
     manifest = _jsonl(run / "acquisition_manifest.jsonl")
     qa_by_id: dict[str, dict[str, Any]] = {}
@@ -223,3 +230,126 @@ def make_report(run: Path) -> Path:
     path = run / "report.html"
     path.write_text(html, encoding="utf-8")
     return path
+
+
+def make_template_report(run: Path, experiment: dict[str, Any]) -> Path:
+    """Display paired outputs without treating unrendered QA variants as passed."""
+    from PIL import Image, ImageDraw, ImageFont
+    cards = []
+    records = []
+    thumbnails = []
+    for row in _jsonl(run/'acquisition_manifest.jsonl'):
+        sample = run/'samples'/row['sample_id']
+        if not (sample/'scene_recipe.json').exists():
+            continue
+        recipe = read_json(sample/'scene_recipe.json')
+        qa = read_json(sample/'qa.json') if (sample/'qa.json').exists() else {'qa_status':'not_run'}
+        effect_path = sample/'diagnostics/category_effect_qa.json'
+        effect = read_json(effect_path) if effect_path.exists() else {'status': 'not_run' if recipe['background_protocol']['mode']=='core' else 'not_applicable'}
+        files = [('Scene RGB','variants/scene_full/rgb.png'),
+                 ('Target RGBA','joint/preview_checker.png'),
+                 ('Without target','variants/scene_without_target/rgb.png')]
+        figures = []
+        for label, relative in files:
+            path = sample/relative
+            if path.exists():
+                url = str(path.relative_to(run))
+                figures.append(f'<figure><a href="{escape(url)}"><img src="{escape(url)}"></a><figcaption>{label}</figcaption></figure>')
+        scene = recipe['scene_template']
+        objects = ', '.join(obj.get('semantic_object',obj['id']) for obj in recipe['objects'])
+        mode = recipe['background_protocol']['mode']
+        sid = row['sample_id']
+        cards.append(f'<article><h2>{escape(sid)} · {escape(scene["id"])}</h2>'
+                     f'<p>{escape(objects)}</p><p>{escape(mode)} · {escape(scene["material_preset"]["id"])} · QA: {escape(qa["qa_status"])} · Effect QA: {escape(effect["status"])}</p>'
+                     f'<p>{escape("; ".join(qa.get("errors", []) + effect.get("errors", [])))}</p>'
+                     f'<div class="images">{"".join(figures)}</div></article>')
+        records.append({'sample_id':sid,'scene_template':scene['id'],'mode':mode,'qa_status':qa['qa_status'],
+                        'effect_qa_status':effect['status'],'material_preset':scene['material_preset']['id'],'render':recipe['render']})
+        rgb = sample/'variants/scene_full/rgb.png'
+        rgba = sample/'joint/preview_checker.png'
+        if rgb.exists() and rgba.exists(): thumbnails.append((sid,rgb,rgba))
+    summary = {'suite':experiment['suite'],'asset_count':experiment['asset_count'],
+               'scene_template_count':len(experiment['scene_templates']),'rendered_samples':len(records),
+               'qa_counts':dict(Counter(r['qa_status'] for r in records)),
+               'effect_qa_counts':dict(Counter(r['effect_qa_status'] for r in records)),'samples':records}
+    for name in ('calibration', 'noise_summary', 'effect_summary'):
+        if (run/(name+'.json')).exists(): summary[name] = read_json(run/(name+'.json'))
+    write_json(run/'report.json',summary)
+    selection=read_json(run/'selection/selected_assets.json')['selected']
+    sources=''.join(f'<li><a href="{escape(a["source_page"])}">{escape(a["name"])}</a> — {escape(a.get("author", ""))} · {escape(a["license"])}</li>' for a in selection.values())
+    document=('<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+              '<title>Template PBR renders</title><style>'
+              'body{margin:32px auto;padding:0 24px;max-width:1600px;background:#eeeae3;color:#252622;font:16px system-ui}'
+              'h1{font-size:34px}article{background:#faf9f5;padding:20px;margin:28px 0;border-radius:8px}'
+              '.images{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}figure{margin:0}img{width:100%;display:block}figcaption{padding:8px 0}a{color:#245449}'
+              '@media(max-width:800px){.images{grid-template-columns:1fr}}</style>'
+              f'<h1>场景 RGB 与目标 RGBA</h1><p>{experiment["asset_count"]} 个 TexVerse PBR 物体 · {len(experiment["scene_templates"])} 个场景模板 · {len(records)} 个已渲染样本。</p>'
+              f'<p>Export calibration: {escape(summary.get("calibration",{}).get("status","not_run"))} · '
+              f'<a href="report.json">Quantitative results</a></p>'
+              '<p>图像来自 Blender/Cycles。Physical 样本的 alpha 为渲染器 alpha；未执行的评测显示为 not_run。</p>'
+              +''.join(cards)+f'<details><summary>物体来源与署名</summary><ul>{sources}</ul></details></html>')
+    (run/'report.html').write_text(document,encoding='utf-8')
+    if thumbnails:
+        width,height=600,400
+        sheet=Image.new('RGB',(width*2,(height+36)*len(thumbnails)), '#eeeae3')
+        draw=ImageDraw.Draw(sheet)
+        try: font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',18)
+        except OSError: font=ImageFont.load_default()
+        for index,(sid,rgb,rgba) in enumerate(thumbnails):
+            y=index*(height+36)
+            for column,(path,label) in enumerate([(rgb,'SCENE RGB'),(rgba,'TARGET RGBA')]):
+                img=Image.open(path).convert('RGB'); img.thumbnail((width,height),Image.Resampling.LANCZOS)
+                sheet.paste(img,(column*width+(width-img.width)//2,y+36+(height-img.height)//2))
+                draw.text((column*width+12,y+8),f'{sid}  |  {label}',font=font,fill='#252622')
+        sheet.save(run/'comparison.jpg',quality=95)
+    return run/'report.html'
+
+
+def make_isolation_report(run: Path) -> Path:
+    """Gallery of separate single-object files; no target-group render is produced."""
+    from PIL import Image, ImageDraw, ImageFont
+    cards, images = [], []
+    summary = read_json(run/'isolation_summary.json')
+    for row in summary['objects']:
+        folder = run/'samples'/row['sample_id']
+        if not (folder/'scene_recipe.json').exists(): continue
+        recipe = read_json(folder/'scene_recipe.json')
+        obj = recipe['objects'][0]
+        title = obj.get('semantic_object', obj['id'])
+        relative = str(folder.relative_to(run))
+        preview = folder/'preview_checker.png'
+        if not preview.exists(): continue
+        cards.append(f'<article><h2>{escape(title)}</h2>'
+                     f'<p>{escape(recipe["identity"]["source_sample_id"])} / {escape(obj["id"])}</p>'
+                     f'<a href="{escape(relative)}/straight_rgba.png"><img src="{escape(relative)}/preview_checker.png"></a>'
+                     f'<p><a href="{escape(relative)}/straight_rgba.png">RGBA PNG</a> · '
+                     f'<a href="{escape(relative)}/linear_premult.exr">Linear EXR</a> · '
+                     f'<a href="{escape(relative)}/scene.blend">Blender scene</a> · '
+                     f'<a href="{escape(relative)}/isolation.json">Render settings</a></p>'
+                     f'<p>Status: {escape(row["status"])}</p></article>')
+        images.append((recipe['identity']['source_sample_id']+' / '+obj['id'], title, preview))
+    document = ('<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+                '<title>Single-object RGBA</title><style>body{max-width:1600px;margin:32px auto;padding:0 24px;background:#eeeae3;color:#252622;font:16px system-ui}'
+                '.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}article{padding:16px;background:#faf9f5;border-radius:8px}'
+                'h2{font-size:20px}img{width:100%;display:block}a{color:#245449}</style>'
+                f'<h1>单物体 RGBA · 中性白光</h1><p>{summary["completed"]} / {summary["object_count"]} 个独立物体输出。</p>'
+                '<p>每次渲染只包含一个语义物体，并使用配方中记录的中性白光。新版默认全方向均匀白光；旧版配方保留三盏面积灯。原场景几何、其他物体、HDRI 与原场景灯光均不参与渲染。'
+                '默认单独居中，保留原观察方向。棋盘格仅用于预览，下载的 PNG 背景透明。</p>'
+                '<p>原生 PBR 材质与自身遮挡、反射仍保留。玻璃使用透明胶片，其 alpha 为当前照明下的渲染器 alpha。</p>'
+                '<div class="grid">'+''.join(cards)+'</div></html>')
+    (run/'report.html').write_text(document, encoding='utf-8')
+    if images:
+        tile, caption, columns = 384, 56, 3
+        sheet = Image.new('RGB', (tile*columns, (tile+caption)*((len(images)+columns-1)//columns)), '#eeeae3')
+        draw = ImageDraw.Draw(sheet)
+        try: font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 17)
+        except OSError: font = ImageFont.load_default()
+        for index, (sid, title, path) in enumerate(images):
+            x, y = (index % columns)*tile, (index // columns)*(tile+caption)
+            preview = Image.open(path).convert('RGB')
+            preview.thumbnail((tile, tile), Image.Resampling.LANCZOS)
+            sheet.paste(preview, (x+(tile-preview.width)//2, y+caption+(tile-preview.height)//2))
+            draw.text((x+10, y+7), sid, font=font, fill='#252622')
+            draw.text((x+10, y+30), title[:38], font=font, fill='#52544e')
+        sheet.save(run/'single_objects.jpg', quality=95)
+    return run/'report.html'

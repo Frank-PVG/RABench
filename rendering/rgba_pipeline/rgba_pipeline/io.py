@@ -10,6 +10,15 @@ def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def recipe_reference(value: dict[str, Any]) -> str:
+    identity = value.get('identity', value)
+    return identity.get('recipe_id') or identity['recipe_hash']
+
+
+def reference_field(recipe: dict[str, Any], prefix: str = '') -> str:
+    return prefix + ('recipe_id' if recipe.get('schema_version') == '1.2' else 'recipe_hash')
+
+
 def write_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")

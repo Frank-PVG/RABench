@@ -1,0 +1,23 @@
+{
+  "version": "p1-v1",
+  "presets": {
+    "paired_linear_rgba": {
+      "resolution": [
+        1024,
+        768
+      ],
+      "samples": 512,
+      "view_transform": "AgX",
+      "target_exposure": 0.0,
+      "target_alpha": "renderer_alpha_only",
+      "linear_exr": "float32_premultiplied",
+      "png": "straight_rgba_display_rgb_linear_alpha",
+      "denoise": false,
+      "clamp_direct": 2.0,
+      "clamp_indirect": 10.0,
+      "max_bounces": 16,
+      "transmission_bounces": 12,
+      "transparent_bounces": 16
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "version": "p1-v1",
+  "bases": {
+    "blue_wall": {
+      "location": [
+        0.62,
+        -0.72,
+        1.11
+      ],
+      "look_at": [
+        0.2,
+        -0.1,
+        0.932
+      ],
+      "lens_mm": 50,
+      "sensor_width_mm": 36,
+      "clip_start": 0.01,
+      "clip_end": 100
+    },
+    "pawn_shop": {
+      "location": [
+        4.55,
+        -1.13,
+        1.14
+      ],
+      "look_at": [
+        5.075,
+        -0.34,
+        0.785
+      ],
+      "lens_mm": 55,
+      "sensor_width_mm": 36,
+      "clip_start": 0.01,
+      "clip_end": 100
+    },
+    "the_shed": {
+      "location": [
+        -0.55,
+        -0.94,
+        1.28
+      ],
+      "look_at": [
+        0.6,
+        -0.35,
+        0.99
+      ],
+      "lens_mm": 50,
+      "sensor_width_mm": 36,
+      "clip_start": 0.01,
+      "clip_end": 100
+    }
+  },
+  "presets": {
+    "three_quarter": {
+      "orbit_degrees": 0,
+      "distance_scale": 1.0,
+      "height_offset_m": 0
+    },
+    "raised": {
+      "orbit_degrees": -12,
+      "distance_scale": 1.05,
+      "height_offset_m": 0.08
+    }
+  }
+}

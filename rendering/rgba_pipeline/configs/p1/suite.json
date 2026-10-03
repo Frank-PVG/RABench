@@ -1,0 +1,274 @@
+{
+  "version": "p1-v1",
+  "cases": [
+    {
+      "id": "P01_boot_a",
+      "object": "boot",
+      "scene": "blue_wall",
+      "scene_material": "blue_wall_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P02_boot_b",
+      "object": "boot",
+      "scene": "pawn_shop",
+      "scene_material": "pawn_shop_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P03_camera_a",
+      "object": "camera",
+      "scene": "pawn_shop",
+      "scene_material": "pawn_shop_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P04_camera_b",
+      "object": "camera",
+      "scene": "the_shed",
+      "scene_material": "the_shed_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P05_teapot_a",
+      "object": "teapot",
+      "scene": "the_shed",
+      "scene_material": "the_shed_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P06_teapot_b",
+      "object": "teapot",
+      "scene": "blue_wall",
+      "scene_material": "blue_wall_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P07_vase_a",
+      "object": "vase",
+      "scene": "blue_wall",
+      "scene_material": "blue_wall_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P08_vase_b",
+      "object": "vase",
+      "scene": "pawn_shop",
+      "scene_material": "pawn_shop_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P09_orange_a",
+      "object": "orange",
+      "scene": "pawn_shop",
+      "scene_material": "pawn_shop_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P10_orange_b",
+      "object": "orange",
+      "scene": "the_shed",
+      "scene_material": "the_shed_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P11_polaroid_a",
+      "object": "polaroid",
+      "scene": "the_shed",
+      "scene_material": "the_shed_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P12_polaroid_b",
+      "object": "polaroid",
+      "scene": "blue_wall",
+      "scene_material": "blue_wall_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P13_radio_a",
+      "object": "radio",
+      "scene": "blue_wall",
+      "scene_material": "blue_wall_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P14_radio_b",
+      "object": "radio",
+      "scene": "pawn_shop",
+      "scene_material": "pawn_shop_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P15_moka_a",
+      "object": "moka",
+      "scene": "pawn_shop",
+      "scene_material": "pawn_shop_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P16_moka_b",
+      "object": "moka",
+      "scene": "the_shed",
+      "scene_material": "the_shed_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P17_mug_a",
+      "object": "mug",
+      "scene": "the_shed",
+      "scene_material": "the_shed_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P18_mug_b",
+      "object": "mug",
+      "scene": "blue_wall",
+      "scene_material": "blue_wall_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P19_latte_a",
+      "object": "latte",
+      "scene": "blue_wall",
+      "scene_material": "blue_wall_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P20_latte_b",
+      "object": "latte",
+      "scene": "pawn_shop",
+      "scene_material": "pawn_shop_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P21_clock_a",
+      "object": "clock",
+      "scene": "pawn_shop",
+      "scene_material": "pawn_shop_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P22_clock_b",
+      "object": "clock",
+      "scene": "the_shed",
+      "scene_material": "the_shed_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "source_pbr",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P23_drink_a",
+      "object": "drink",
+      "scene": "the_shed",
+      "scene_material": "the_shed_original",
+      "camera": "three_quarter",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "clear",
+      "export": "paired_linear_rgba"
+    },
+    {
+      "id": "P24_drink_b",
+      "object": "drink",
+      "scene": "blue_wall",
+      "scene_material": "blue_wall_alternate",
+      "camera": "raised",
+      "context_lighting": "authored_context",
+      "target_lighting": "uniform_white",
+      "object_material": "amber_blue",
+      "export": "paired_linear_rgba"
+    }
+  ],
+  "luna_pilot": [
+    "P09_orange_a",
+    "P16_moka_b",
+    "P24_drink_b"
+  ]
+}

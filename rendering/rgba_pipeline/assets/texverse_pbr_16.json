@@ -1,0 +1,290 @@
+[
+  {
+    "asset_id": "texverse_01",
+    "uid": "b2e6ecf41b5146c7b21c1b158e3b1436",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-032/b2e6ecf41b5146c7b21c1b158e3b1436_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/b2e6ecf41b5146c7b21c1b158e3b1436",
+    "dataset": "TexVerse",
+    "name": "Caterpillar Work Boot",
+    "author": "hephaestusbasketballgreece",
+    "pbr_type": "specular",
+    "texture_resolution": 4096,
+    "size_m": 0.31,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_02",
+    "uid": "dadd8c963821485ba198731008f566bd",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-034/dadd8c963821485ba198731008f566bd_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/dadd8c963821485ba198731008f566bd",
+    "dataset": "TexVerse",
+    "name": "Camera Konica",
+    "author": "alex236",
+    "pbr_type": "metalness",
+    "texture_resolution": 4096,
+    "size_m": 0.18,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_03",
+    "uid": "6ae82ca345a0452bacc2571026a801b9",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-027/6ae82ca345a0452bacc2571026a801b9_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/6ae82ca345a0452bacc2571026a801b9",
+    "dataset": "TexVerse",
+    "name": "Book - Fables de La Fontaine",
+    "author": "Sirolalo",
+    "pbr_type": "metalness",
+    "texture_resolution": 4096,
+    "size_m": 0.24,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_04",
+    "uid": "48f156530c1448f7af33d2808b6db599",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-025/48f156530c1448f7af33d2808b6db599_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/48f156530c1448f7af33d2808b6db599",
+    "dataset": "TexVerse",
+    "name": "Ornate Teapot",
+    "author": "N-GONE",
+    "pbr_type": "metalness",
+    "texture_resolution": 4096,
+    "size_m": 0.25,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_05",
+    "uid": "b07036236bda403b95693edae3fca4b2",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-014/b07036236bda403b95693edae3fca4b2_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/b07036236bda403b95693edae3fca4b2",
+    "dataset": "TexVerse",
+    "name": "Camera 01 4k",
+    "author": "mohamedhussien",
+    "pbr_type": "metalness",
+    "texture_resolution": 4096,
+    "size_m": 0.19,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_06",
+    "uid": "80221d48dfe64b0782b68ccb33abb49d",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_2k/000-022/80221d48dfe64b0782b68ccb33abb49d_2048.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/80221d48dfe64b0782b68ccb33abb49d",
+    "dataset": "TexVerse",
+    "name": "Vase",
+    "author": "OlhaV",
+    "pbr_type": "metalness",
+    "texture_resolution": 2048,
+    "size_m": 0.22,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_07",
+    "uid": "d075feb7b0d941df81f23d8df4369ce4",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-033/d075feb7b0d941df81f23d8df4369ce4_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/d075feb7b0d941df81f23d8df4369ce4",
+    "dataset": "TexVerse",
+    "name": "Orange",
+    "author": "MacDrawz",
+    "pbr_type": "metalness",
+    "texture_resolution": 4096,
+    "size_m": 0.09,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_08",
+    "uid": "03cd64f60dd04b4c9170132f9671cde5",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_2k/000-016/03cd64f60dd04b4c9170132f9671cde5_2048.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/03cd64f60dd04b4c9170132f9671cde5",
+    "dataset": "TexVerse",
+    "name": "Kettle",
+    "author": "Jesus",
+    "pbr_type": "metalness",
+    "texture_resolution": 2048,
+    "size_m": 0.26,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_09",
+    "uid": "5eefea73b7ab414bbbaee224ded8fb0b",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-027/5eefea73b7ab414bbbaee224ded8fb0b_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/5eefea73b7ab414bbbaee224ded8fb0b",
+    "dataset": "TexVerse",
+    "name": "Dusty Polaroid 1000 Land Camera",
+    "author": "Doodlemodel",
+    "pbr_type": "metalness",
+    "texture_resolution": 4096,
+    "size_m": 0.19,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_10",
+    "uid": "5c7e5f9531794a82ac030d892d564f74",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_2k/000-021/5c7e5f9531794a82ac030d892d564f74_2048.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/5c7e5f9531794a82ac030d892d564f74",
+    "dataset": "TexVerse",
+    "name": "Retro Style Radio",
+    "author": "arkanhafizh82",
+    "pbr_type": "metalness",
+    "texture_resolution": 2048,
+    "size_m": 0.32,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_11",
+    "uid": "de179cfe187542e79bc352f6ef72f2be",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_2k/000-027/de179cfe187542e79bc352f6ef72f2be_2048.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/de179cfe187542e79bc352f6ef72f2be",
+    "dataset": "TexVerse",
+    "name": "Antique telephone",
+    "author": "fakevalerie",
+    "pbr_type": "metalness",
+    "texture_resolution": 2048,
+    "size_m": 0.25,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_12",
+    "uid": "7bc2b14a48d1413e9375c32a53e3ee6f",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_2k/000-022/7bc2b14a48d1413e9375c32a53e3ee6f_2048.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/7bc2b14a48d1413e9375c32a53e3ee6f",
+    "dataset": "TexVerse",
+    "name": "Aluminum mug",
+    "author": "Mikhail Antonov",
+    "pbr_type": "metalness",
+    "texture_resolution": 2048,
+    "size_m": 0.12,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_13",
+    "uid": "d5d84c8ca67b4817a5559d38f28eac8e",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_2k/000-026/d5d84c8ca67b4817a5559d38f28eac8e_2048.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/d5d84c8ca67b4817a5559d38f28eac8e",
+    "dataset": "TexVerse",
+    "name": "Moka Pot",
+    "author": "morhif",
+    "pbr_type": "metalness",
+    "texture_resolution": 2048,
+    "size_m": 0.19,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_14",
+    "uid": "c4c30808f8ba43ca944a0acc1e743889",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-016/c4c30808f8ba43ca944a0acc1e743889_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/c4c30808f8ba43ca944a0acc1e743889",
+    "dataset": "TexVerse",
+    "name": "Cup",
+    "author": "Itay.Bakimer",
+    "pbr_type": "metalness",
+    "texture_resolution": 4096,
+    "size_m": 0.115,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_15",
+    "uid": "9d2b96b5e3aa4bc69611975b3eb0b1fb",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-013/9d2b96b5e3aa4bc69611975b3eb0b1fb_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/9d2b96b5e3aa4bc69611975b3eb0b1fb",
+    "dataset": "TexVerse",
+    "name": "Coffee Latte In Mug With Saucer",
+    "author": "HQ3DMOD",
+    "pbr_type": "specular",
+    "texture_resolution": 4096,
+    "size_m": 0.21,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "asset_id": "texverse_16",
+    "uid": "90bd0544ab7e46519e8f99abae4e410d",
+    "url": "https://huggingface.co/datasets/YiboZhang2001/TexVerse/resolve/main/glbs/glbs_4k/000-012/90bd0544ab7e46519e8f99abae4e410d_4096.glb",
+    "license": "CC Attribution",
+    "source_page": "https://sketchfab.com/3d-models/90bd0544ab7e46519e8f99abae4e410d",
+    "dataset": "TexVerse",
+    "name": "Alarm Clock",
+    "author": "Pranav_1603",
+    "pbr_type": "metalness",
+    "texture_resolution": 4096,
+    "size_m": 0.13,
+    "rotation": [
+      0,
+      0,
+      0
+    ]
+  }
+]

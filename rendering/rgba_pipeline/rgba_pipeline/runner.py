@@ -42,7 +42,8 @@ def eligible_gpus(max_workers: int = MAX_WORKERS) -> list[dict[str, Any]]:
     return devices[:max(0, min(MAX_WORKERS, int(max_workers)))]
 
 
-def _job(row: dict[str, Any], run: Path, gpu: dict[str, Any], *, resume: bool) -> dict[str, Any]:
+def _job(row: dict[str, Any], run: Path, gpu: dict[str, Any], *, resume: bool,
+         variant_filter: set[str] | None = None) -> dict[str, Any]:
     recipe_path = Path(row["recipe"])
     sample = run / "samples" / row["sample_id"]
     sample.mkdir(parents=True, exist_ok=True)
@@ -50,25 +51,31 @@ def _job(row: dict[str, Any], run: Path, gpu: dict[str, Any], *, resume: bool) -
     previous = sample / "scene_recipe.json"
     if previous.exists():
         old = json.loads(previous.read_text())
-        if old.get("identity", {}).get("recipe_hash") != row["recipe_hash"]:
-            archive = run / "archive" / f"{row['sample_id']}_{old.get('identity', {}).get('recipe_hash', 'unknown')[:12]}"
+        changed = old != recipe if recipe.get('schema_version') == '1.2' else old.get("identity", {}).get("recipe_hash") != row["recipe_hash"]
+        if changed:
+            old_id = old.get('identity', {}).get('recipe_id') or old.get('identity', {}).get('recipe_hash', 'unknown')
+            archive = run / "archive" / f"{row['sample_id']}_{old_id[:12]}"
             archive.parent.mkdir(parents=True, exist_ok=True)
             if archive.exists(): raise RuntimeError(f"refusing to overwrite archived bundle {archive}")
             shutil.move(str(sample), str(archive))
             sample.mkdir(parents=True, exist_ok=True)
     shutil.copy2(recipe_path, previous)
-    result = render_recipe(recipe_path, sample, resume=resume, gpu_uuid=gpu["uuid"])
+    result = render_recipe(recipe_path, sample, resume=resume, gpu_uuid=gpu["uuid"], variant_filter=variant_filter)
     metadata = {
         "schema_version": recipe["schema_version"], "experiment_id": recipe.get("experiment_id"),
         "sample_id": recipe["identity"]["sample_id"], "scene_root_id": recipe["identity"]["scene_root_id"],
         "category": recipe["identity"]["category"], "camera_id": recipe["identity"]["camera_id"],
-        "light_id": recipe["identity"]["light_id"], "scene_content_hash": recipe["identity"]["scene_content_hash"],
-        "recipe_hash": recipe["identity"]["recipe_hash"], "target_ids": recipe["sets"]["TARGET"],
+        "light_id": recipe["identity"]["light_id"], "scene_content_hash": recipe["identity"].get("scene_content_hash"),
+        "recipe_hash": recipe["identity"].get("recipe_hash"), 'recipe_id': recipe['identity'].get('recipe_id'),
+        'scene_template': recipe.get('scene_template'), "target_ids": recipe["sets"]["TARGET"],
         "environment_ids": recipe["sets"]["ENVIRONMENT"], "asset_lineage_ids": recipe["identity"]["asset_lineage_ids"],
         "gpu": gpu, "renderer": "Blender Cycles", "variant_count": len(result["variants"]),
     }
     write_json(sample / "metadata.json", metadata)
     write_json(sample / "render_log.json", {**result, "gpu": gpu, "finished_at": time.time()})
+    if variant_filter is not None:
+        return {'sample_id': row['sample_id'], 'scene_id': row['scene_id'], 'status': 'rendered_subset',
+                'qa_status': 'not_run', 'gpu': gpu, 'variants': sorted(variant_filter)}
     qa = validate_sample(sample)
     return {"sample_id": row["sample_id"], "scene_id": row["scene_id"], "status": "succeeded" if qa["qa_status"] == "pass" else "qa_failed",
             "qa_status": qa["qa_status"], "gpu": gpu, "errors": qa["errors"], "metrics": qa["metrics"]}
@@ -81,12 +88,13 @@ def _group_rows_by_scene(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [{"scene_id": scene_id, "rows": grouped[scene_id]} for scene_id in grouped]
 
 
-def _scene_job(group: dict[str, Any], run: Path, gpu: dict[str, Any], *, resume: bool) -> list[dict[str, Any]]:
+def _scene_job(group: dict[str, Any], run: Path, gpu: dict[str, Any], *, resume: bool,
+               variant_filter: set[str] | None = None) -> list[dict[str, Any]]:
     """Keep one GPU worker on a scene and render its remaining camera/light combinations in order."""
     statuses = []
     for row in group["rows"]:
         try:
-            statuses.append(_job(row, run, gpu, resume=resume))
+            statuses.append(_job(row, run, gpu, resume=resume, variant_filter=variant_filter))
         except Exception as exc:
             statuses.append({"sample_id": row["sample_id"], "scene_id": row["scene_id"],
                              "status": "failed", "gpu": gpu, "error": str(exc)})
@@ -94,11 +102,11 @@ def _scene_job(group: dict[str, Any], run: Path, gpu: dict[str, Any], *, resume:
 
 
 def run_expansion_batch(run: Path, *, max_workers: int = MAX_WORKERS, resume: bool = True,
-                        scene_ids: set[str] | None = None) -> dict[str, Any]:
+                        scene_ids: set[str] | None = None, variant_filter: set[str] | None = None) -> dict[str, Any]:
     run = Path(run).resolve()
     manifest = run / "acquisition_manifest.jsonl"
     rows = [json.loads(line) for line in manifest.read_text().splitlines() if line.strip()]
-    retryable = {"pending", "failed", "qa_failed", "waiting_gpu_idle", "blocked_storage"}
+    retryable = {"pending", "failed", "qa_failed", "waiting_gpu_idle", "blocked_storage", 'rendered_subset'}
     rows = [x for x in rows if (x.get("status") in retryable or not resume)
             and (scene_ids is None or x["scene_id"] in scene_ids)]
     if not rows: return {"submitted": 0, "completed": 0, "waiting": 0, "failures": []}
@@ -117,7 +125,7 @@ def run_expansion_batch(run: Path, *, max_workers: int = MAX_WORKERS, resume: bo
             available = [gpu for gpu in available if gpu["uuid"] not in already]
             while pending and available and len(active) < device_limit:
                 group = pending.pop(0); gpu = available.pop(0)
-                future = pool.submit(_scene_job, group, run, gpu, resume=resume)
+                future = pool.submit(_scene_job, group, run, gpu, resume=resume, variant_filter=variant_filter)
                 active[future] = (group, gpu)
             if not active:
                 statuses.extend({"sample_id": row["sample_id"], "scene_id": group["scene_id"],
@@ -133,7 +141,7 @@ def run_expansion_batch(run: Path, *, max_workers: int = MAX_WORKERS, resume: bo
                     records = [{"sample_id": row["sample_id"], "scene_id": row["scene_id"],
                                 "status": "failed", "gpu": gpu, "error": str(exc)} for row in group["rows"]]
                 statuses.extend(records)
-                failures.extend(record for record in records if record["status"] != "succeeded")
+                failures.extend(record for record in records if record["status"] not in {'succeeded','rendered_subset'})
                 disk_now = shutil.disk_usage(run)
                 if disk_now.free < MIN_DISK_FREE_BYTES:
                     statuses.extend({"sample_id": row["sample_id"], "scene_id": pending_group["scene_id"],
@@ -150,6 +158,6 @@ def run_expansion_batch(run: Path, *, max_workers: int = MAX_WORKERS, resume: bo
         status = by_sample.get(row.get("sample_id"))
         if status: row["status"] = status["status"]
     manifest.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in manifest_rows))
-    return {"submitted": len(rows), "completed": sum(x.get("status") in {"succeeded", "qa_failed", "failed"} for x in statuses),
+    return {"submitted": len(rows), "completed": sum(x.get("status") in {"succeeded", "qa_failed", "failed", 'rendered_subset'} for x in statuses),
             "waiting": sum(x.get("status") == "waiting_gpu_idle" for x in statuses), "failures": failures,
             "status_path": str(status_path)}

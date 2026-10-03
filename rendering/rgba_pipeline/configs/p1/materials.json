@@ -1,0 +1,124 @@
+{
+  "version": "p1-v1",
+  "scene_surfaces": {
+    "blue_wall_original": {
+      "id": "original",
+      "edits": []
+    },
+    "blue_wall_alternate": {
+      "id": "weathered_wood",
+      "edits": [
+        {
+          "objects": [
+            "Sideboard_01"
+          ],
+          "materials": [
+            "Sideboard_01"
+          ],
+          "texture_size_m": 0.65,
+          "maps": {
+            "base_color": "assets/materials/wood_table_worn/wood_table_worn_diff_2k.jpg",
+            "roughness": "assets/materials/wood_table_worn/wood_table_worn_rough_2k.jpg",
+            "normal": "assets/materials/wood_table_worn/wood_table_worn_nor_gl_2k.jpg"
+          }
+        }
+      ]
+    },
+    "pawn_shop_original": {
+      "id": "original",
+      "edits": []
+    },
+    "pawn_shop_alternate": {
+      "id": "warm_wall",
+      "edits": [
+        {
+          "objects": [
+            "wall_*"
+          ],
+          "materials": [
+            "*plaster*"
+          ],
+          "base_color_tint": [
+            1,
+            0.87,
+            0.7
+          ]
+        }
+      ]
+    },
+    "the_shed_original": {
+      "id": "original",
+      "edits": []
+    },
+    "the_shed_alternate": {
+      "id": "warm_bench",
+      "edits": [
+        {
+          "objects": [
+            "WoodenTable_03*"
+          ],
+          "materials": [
+            "*"
+          ],
+          "base_color_tint": [
+            1,
+            0.85,
+            0.65
+          ]
+        }
+      ]
+    }
+  },
+  "object_surfaces": {
+    "source_pbr": {
+      "policy": "preserve_source"
+    },
+    "clear_glass": {
+      "preset": "glass",
+      "ior": 1.45,
+      "roughness": 0.025
+    },
+    "clear_water": {
+      "preset": "liquid",
+      "ior": 1.333,
+      "roughness": 0,
+      "absorption_color": [
+        0.95,
+        0.98,
+        1
+      ],
+      "absorption_density": 0.04
+    },
+    "amber_water": {
+      "preset": "liquid",
+      "ior": 1.333,
+      "roughness": 0,
+      "absorption_color": [
+        0.92,
+        0.65,
+        0.24
+      ],
+      "absorption_density": 1.5
+    },
+    "red_straw": {
+      "preset": "opaque_principled",
+      "base_color": [
+        0.85,
+        0.025,
+        0.015,
+        1
+      ],
+      "roughness": 0.3
+    },
+    "blue_straw": {
+      "preset": "opaque_principled",
+      "base_color": [
+        0.015,
+        0.16,
+        0.8,
+        1
+      ],
+      "roughness": 0.3
+    }
+  }
+}

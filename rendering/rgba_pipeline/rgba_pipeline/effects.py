@@ -13,7 +13,7 @@ import OpenEXR
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-from .io import canonical_hash, read_json, write_json
+from .io import canonical_hash, read_json, write_json, recipe_reference, reference_field
 from .render import run_variant
 from .runner import MAX_WORKERS, eligible_gpus
 from .validate import read_exr
@@ -38,7 +38,7 @@ def _noise_sigma(sample: Path) -> tuple[float, float]:
 def _intervention_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     derived = copy.deepcopy(recipe)
     ident = derived["identity"]
-    parent_hash = ident["recipe_hash"]
+    parent_hash = recipe_reference(recipe)
     category = ident["category"]
     objects = {obj["id"]: obj for obj in derived["objects"]}
     if category == "simple_control":
@@ -75,9 +75,13 @@ def _intervention_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     else:
         raise ValueError(f"no categorical intervention for {category}")
     derived.setdefault("diagnostics", {})["intervention"] = cfg
-    ident.pop("recipe_hash", None)
-    ident["parent_recipe_hash"] = parent_hash
-    ident["recipe_hash"] = canonical_hash(derived)
+    if recipe.get('schema_version') == '1.2':
+        ident['parent_recipe_id'] = parent_hash
+        ident['recipe_id'] = parent_hash + '.intervention'
+    else:
+        ident.pop("recipe_hash", None)
+        ident["parent_recipe_hash"] = parent_hash
+        ident["recipe_hash"] = canonical_hash(derived)
     return derived
 
 
@@ -110,8 +114,8 @@ def _intervention_metrics(sample: Path, recipe: dict[str, Any], derived: dict[st
     metrics = {
         "sample_id": recipe["identity"]["sample_id"],
         "category": recipe["identity"]["category"],
-        "parent_recipe_hash": recipe["identity"]["recipe_hash"],
-        "intervention_recipe_hash": derived["identity"]["recipe_hash"],
+        reference_field(recipe,'parent_'): recipe_reference(recipe),
+        reference_field(recipe,'intervention_'): recipe_reference(derived),
         "intervention": derived["diagnostics"]["intervention"],
         "roi_pixels": count,
         "effect_threshold_scene_linear": threshold,
@@ -137,8 +141,8 @@ def _intervention_metrics(sample: Path, recipe: dict[str, Any], derived: dict[st
 def _intervention_job(row: dict[str, Any], run: Path, gpu: dict[str, Any], *, resume: bool) -> dict[str, Any]:
     sample = run / "samples" / row["sample_id"]
     recipe = read_json(sample / "scene_recipe.json")
-    if recipe["identity"]["recipe_hash"] != row["recipe_hash"]:
-        raise ValueError(f"sample recipe hash mismatch: {row['sample_id']}")
+    if recipe_reference(recipe) != recipe_reference(row):
+        raise ValueError(f"sample recipe identity mismatch: {row['sample_id']}")
     derived = _intervention_recipe(recipe)
     diag = sample / "diagnostics"
     diag.mkdir(parents=True, exist_ok=True)
@@ -147,7 +151,7 @@ def _intervention_job(row: dict[str, Any], run: Path, gpu: dict[str, Any], *, re
     metrics_path = diag / "intervention_metrics.json"
     if resume and metrics_path.exists() and (output / "linear_premult.exr").exists():
         prior = read_json(metrics_path)
-        if prior.get("parent_recipe_hash") == row["recipe_hash"] and prior.get("intervention_recipe_hash") == derived["identity"]["recipe_hash"]:
+        if prior.get(reference_field(recipe,'parent_')) == recipe_reference(row) and prior.get(reference_field(recipe,'intervention_')) == recipe_reference(derived):
             return {"sample_id": row["sample_id"], "status": prior["status"], "resumed": True}
     write_json(recipe_path, derived)
     log_path = output / "render_log.json"
@@ -163,7 +167,7 @@ def _intervention_job(row: dict[str, Any], run: Path, gpu: dict[str, Any], *, re
         run_variant(recipe_path, output, "intervention", gpu_uuid=gpu["uuid"])
     metrics = _intervention_metrics(sample, recipe, derived)
     metrics["render_reused_from_formal_bundle"] = reusable_formal
-    metrics["render_source_recipe_hash"] = row["recipe_hash"]
+    metrics[reference_field(recipe,'render_source_')] = recipe_reference(row)
     metrics["gpu"] = gpu
     write_json(metrics_path, metrics)
     return {"sample_id": row["sample_id"], "status": metrics["status"], "gpu": gpu,
@@ -174,8 +178,8 @@ def _occlusion_job(row: dict[str, Any], run: Path, gpu: dict[str, Any], *, resum
     sample = run / "samples" / row["sample_id"]
     recipe_path = Path(row["recipe"])
     recipe = read_json(recipe_path)
-    if recipe["identity"]["recipe_hash"] != row["recipe_hash"]:
-        raise ValueError(f"sample recipe hash mismatch: {row['sample_id']}")
+    if recipe_reference(recipe) != recipe_reference(row):
+        raise ValueError(f"sample recipe identity mismatch: {row['sample_id']}")
     output = sample / "diagnostics" / "occlusion_depth"
     manifest = output / "depth_manifest.json"
     expected = [f"{object_id}.exr" for object_id in recipe["sets"]["TARGET"]]
@@ -260,7 +264,7 @@ def _depth_metrics(sample: Path, recipe: dict[str, Any]) -> dict[str, Any]:
                           "fixed_global_layer_order_impossible": a_front >= 64 and b_front >= 64})
     passed = bool(pairs) and any(x["reciprocal_order_pass"] for x in pairs)
     return {"sample_id": recipe["identity"]["sample_id"], "category": "interleaved_occlusion",
-            "recipe_hash": recipe["identity"]["recipe_hash"], "status": "pass" if passed else "fail",
+            reference_field(recipe): recipe_reference(recipe), "status": "pass" if passed else "fail",
             "pairs": pairs, "errors": [] if passed else ["no object pair has 64 valid overlap pixels in both depth orders"]}
 
 
@@ -372,7 +376,7 @@ def _translucency_metrics(sample: Path, recipe: dict[str, Any]) -> dict[str, Any
     if opacity_measurements:
         passed = passed and all(x["absolute_error"] <= .10 for x in opacity_measurements)
     return {"sample_id": recipe["identity"]["sample_id"], "category": "translucent_overlap",
-            "recipe_hash": recipe["identity"]["recipe_hash"], "status": "pass" if passed else "fail",
+            reference_field(recipe): recipe_reference(recipe), "status": "pass" if passed else "fail",
             "cover_layer_count": len(ids), "hanging_envelope_pixels": int(hanging.sum()),
             "hanging_envelope_fraction_full_frame": float(hanging.sum() / joint_alpha.size),
             "fractional_alpha_fraction_in_hanging_envelope": fractional_fraction,
@@ -482,7 +486,7 @@ def _category_metrics(sample: Path, recipe: dict[str, Any]) -> dict[str, Any]:
     checks["status"] = "pass" if passed else "fail"
     checks["errors"] = list(dict.fromkeys(errors))
     checks["sample_id"] = recipe["identity"]["sample_id"]
-    checks["recipe_hash"] = recipe["identity"]["recipe_hash"]
+    checks[reference_field(recipe)] = recipe_reference(recipe)
     write_json(sample / "diagnostics" / "category_effect_qa.json", checks)
     return checks
 
@@ -493,7 +497,8 @@ def _collect_samples(run: Path) -> list[dict[str, Any]]:
 
 def run_effect_suite(run: Path, *, max_workers: int = MAX_WORKERS, resume: bool = True) -> dict[str, Any]:
     run = Path(run).resolve()
-    rows = _collect_samples(run)
+    all_rows = _collect_samples(run)
+    rows = [row for row in all_rows if read_json(Path(row['recipe']))['background_protocol']['mode'] == 'core']
     intervention_done, intervention_failures = _dispatch(rows, _intervention_job, run, max_workers, resume=resume)
     occlusion_rows = [row for row in rows if read_json(Path(row["recipe"]))["identity"]["category"] == "interleaved_occlusion"]
     occlusion_done, occlusion_failures = _dispatch(occlusion_rows, _occlusion_job, run, max_workers, resume=resume)
@@ -506,12 +511,15 @@ def run_effect_suite(run: Path, *, max_workers: int = MAX_WORKERS, resume: bool 
     for item in samples:
         recipe = read_json(run / "samples" / item["sample_id"] / "scene_recipe.json")
         category_by_root.setdefault(recipe["identity"]["scene_root_id"], []).append(item)
+    expected_per_scene: dict[str, int] = {}
+    for row in rows:
+        expected_per_scene[row['scene_id']] = expected_per_scene.get(row['scene_id'], 0) + 1
     plan_path = run / "scene_plan.jsonl"
     if plan_path.exists():
         plan = [json.loads(line) for line in plan_path.read_text().splitlines() if line.strip()]
         for row in plan:
             checks = category_by_root.get(row["scene_id"], [])
-            if len(checks) == 4 and all(x["status"] == "pass" for x in checks):
+            if len(checks) == expected_per_scene.get(row['scene_id'], 4) and all(x["status"] == "pass" for x in checks):
                 row["status"] = "completed"
                 row.pop("pause_reason", None)
             elif any(x["status"] == "fail" for x in checks):
@@ -520,13 +528,14 @@ def run_effect_suite(run: Path, *, max_workers: int = MAX_WORKERS, resume: bool 
         plan_path.write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in plan))
     summary = {
         "run": str(run), "submitted_interventions": len(rows),
+        'skipped_physical_samples':len(all_rows)-len(rows),
         "completed_interventions": sum(x.get("status") in {"pass", "resumed"} for x in intervention_done),
         "intervention_failures": intervention_failures,
         "submitted_occlusion_depth": len(occlusion_rows),
         "completed_occlusion_depth": sum(x.get("status") in {"succeeded", "resumed"} for x in occlusion_done),
         "occlusion_depth_failures": occlusion_failures,
         "category_qa_counts": {key: sum(x["status"] == key for x in samples) for key in ("pass", "fail")},
-        "scene_quality_status_counts": {"completed": sum(len(v) == 4 and all(x["status"] == "pass" for x in v) for v in category_by_root.values()),
+        "scene_quality_status_counts": {"completed": sum(len(v) == expected_per_scene.get(sid, 4) and all(x["status"] == "pass" for x in v) for sid, v in category_by_root.items()),
                                          "paused_quality_failed": sum(any(x["status"] == "fail" for x in v) for v in category_by_root.values())},
         "category_qa": samples,
     }

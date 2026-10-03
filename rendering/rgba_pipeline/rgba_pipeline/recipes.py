@@ -120,15 +120,16 @@ def validate_recipe(recipe: dict[str, Any]) -> list[str]:
     needed = {"schema_version", "generator_version", "identity", "sets", "objects", "relations", "camera", "environment", "background_protocol", "render", "seeds", "diagnostics", "semantics"}
     errors.extend(sorted(needed - recipe.keys()))
     version = recipe.get("schema_version")
-    if version not in {"1.0", "1.1"}: errors.append(f"unsupported schema version {version!r}")
+    if version not in {"1.0", "1.1", "1.2", "1.3"}: errors.append(f"unsupported schema version {version!r}")
     ids = [obj.get("id") for obj in recipe.get("objects", [])]
     if len(ids) != len(set(ids)): errors.append("duplicate object ids")
     target = recipe.get("sets", {}).get("TARGET", [])
     if not target: errors.append("TARGET is empty")
     if set(target) - set(ids): errors.append("TARGET has invalid references")
     environment = recipe.get("sets", {}).get("ENVIRONMENT", [])
-    if set(environment) - set(ids): errors.append("ENVIRONMENT has invalid references")
-    if recipe.get("background_protocol", {}).get("mode") not in {"core", "physical"}: errors.append("invalid background mode")
+    environment_ids=set(ids) | ({'__scene_environment__'} if recipe.get('scene_template') else set())
+    if set(environment) - environment_ids: errors.append("ENVIRONMENT has invalid references")
+    if recipe.get("background_protocol", {}).get("mode") not in ({"isolated"} if version == '1.3' else {"core", "physical"}): errors.append("invalid background mode")
     if version == "1.1":
         identity = recipe.get("identity", {})
         for field in ("scene_root_id", "category", "camera_id", "light_id", "scene_content_hash", "recipe_hash"):
@@ -141,6 +142,22 @@ def validate_recipe(recipe: dict[str, Any]) -> list[str]:
             from .io import canonical_hash
             normalized = deepcopy(recipe); expected = normalized["identity"].pop("recipe_hash")
             if canonical_hash(normalized) != expected: errors.append("recipe hash mismatch")
+    if version == '1.2':
+        for field in ('sample_id', 'scene_root_id', 'recipe_id', 'category', 'camera_id', 'light_id'):
+            if not recipe.get('identity', {}).get(field): errors.append(f'schema 1.2 identity missing {field}')
+        template = recipe.get('scene_template', {})
+        if not template.get('id') or not template.get('blend_file'): errors.append('template id and blend_file are required')
+        for obj in recipe.get('objects', []):
+            if obj.get('role') == 'asset' and obj.get('material_policy') != 'preserve_source':
+                errors.append('template asset must preserve source PBR materials')
+    if version == '1.3':
+        oid = recipe.get('isolation', {}).get('object_id')
+        if ids != [oid] or target != [oid]: errors.append('isolation requires exactly one semantic object')
+        if environment or recipe.get('sets', {}).get('BACKPLATE'): errors.append('isolated recipe contains environment/backplate objects')
+        if recipe.get('scene_template'): errors.append('isolated recipe must not load a scene template')
+        if recipe.get('environment', {}).get('lights'): errors.append('isolated recipe must not reuse scene lights')
+        if recipe.get('relations'): errors.append('isolated recipe must not contain inter-object relations')
+        if recipe.get('isolation', {}).get('protocol') not in {'neutral-white-object-v1','neutral-white-object-v2'}: errors.append('unknown isolation protocol')
     return errors
 
 

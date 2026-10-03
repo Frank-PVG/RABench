@@ -1,0 +1,192 @@
+{
+  "version": "p1-v1",
+  "presets": {
+    "boot": {
+      "role": "asset",
+      "asset_id": "texverse_01",
+      "yaw_radians": 1.3921783432740826,
+      "material_preset": "source_pbr",
+      "size_m": 0.29
+    },
+    "camera": {
+      "role": "asset",
+      "asset_id": "texverse_02",
+      "yaw_radians": 2.0,
+      "material_preset": "source_pbr"
+    },
+    "teapot": {
+      "role": "asset",
+      "asset_id": "texverse_04",
+      "yaw_radians": 0,
+      "material_preset": "source_pbr"
+    },
+    "vase": {
+      "role": "asset",
+      "asset_id": "texverse_06",
+      "yaw_radians": 0,
+      "material_preset": "source_pbr"
+    },
+    "orange": {
+      "role": "asset",
+      "asset_id": "texverse_07",
+      "yaw_radians": 0,
+      "material_preset": "source_pbr"
+    },
+    "polaroid": {
+      "role": "asset",
+      "asset_id": "texverse_09",
+      "yaw_radians": 1.0921783432740826,
+      "material_preset": "source_pbr"
+    },
+    "radio": {
+      "role": "asset",
+      "asset_id": "texverse_10",
+      "yaw_radians": 0,
+      "material_preset": "source_pbr",
+      "size_m": 0.28
+    },
+    "moka": {
+      "role": "asset",
+      "asset_id": "texverse_13",
+      "yaw_radians": 0.6819504917638284,
+      "material_preset": "source_pbr"
+    },
+    "mug": {
+      "role": "asset",
+      "asset_id": "texverse_14",
+      "yaw_radians": 3.2819504917638285,
+      "material_preset": "source_pbr",
+      "size_m": 0.15
+    },
+    "latte": {
+      "role": "asset",
+      "asset_id": "texverse_15",
+      "yaw_radians": 0,
+      "material_preset": "source_pbr"
+    },
+    "clock": {
+      "role": "asset",
+      "asset_id": "texverse_16",
+      "yaw_radians": 0,
+      "material_preset": "source_pbr"
+    },
+    "drink": {
+      "role": "assembly",
+      "semantic_object": "glass of water with a drinking straw",
+      "size_m": 0.2,
+      "height_m": 0.19,
+      "yaw_radians": 0,
+      "components": [
+        {
+          "id": "cup",
+          "role": "procedural",
+          "geometry": {
+            "type": "cup",
+            "outer_radius": 0.047,
+            "height": 0.145,
+            "wall": 0.0025,
+            "bottom": 0.003
+          },
+          "transform": {
+            "location": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "semantic_object": "clear glass tumbler",
+          "material_preset": "clear_glass"
+        },
+        {
+          "id": "liquid",
+          "role": "procedural",
+          "geometry": {
+            "type": "liquid",
+            "radius": 0.0439,
+            "height": 0.091
+          },
+          "transform": {
+            "location": [
+              0,
+              0,
+              0.0035
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "semantic_object": "clear water",
+          "material_preset": "clear_water"
+        },
+        {
+          "id": "straw",
+          "role": "procedural",
+          "geometry": {
+            "type": "straw",
+            "radius": 0.0035,
+            "points": [
+              [
+                -0.02,
+                0,
+                0.012
+              ],
+              [
+                0.012,
+                0,
+                0.155
+              ],
+              [
+                0.05,
+                0,
+                0.19
+              ]
+            ]
+          },
+          "transform": {
+            "location": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "semantic_object": "red bent straw",
+          "material_preset": "red_straw"
+        }
+      ],
+      "material_variants": {
+        "clear": {},
+        "amber_blue": {
+          "liquid": "amber_water",
+          "straw": "blue_straw"
+        }
+      }
+    }
+  }
+}

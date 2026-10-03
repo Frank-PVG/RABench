@@ -12,7 +12,7 @@ from typing import Any
 import numpy as np
 
 from .experiment import stable_seed
-from .io import canonical_hash, read_json, write_json
+from .io import canonical_hash, read_json, write_json, recipe_reference, reference_field
 from .render import run_variant
 from .runner import MIN_DISK_FREE_BYTES, MAX_WORKERS, eligible_gpus
 from .validate import read_exr
@@ -86,15 +86,15 @@ def _noise_job(recipe_path: Path, run: Path, gpu: dict[str, Any], *, resume: boo
     sample = run / "samples" / sample_id
     if not sample.is_dir() or not (sample / "scene_recipe.json").is_file():
         raise FileNotFoundError(f"base sample is missing: {sample}")
-    parent_hash = identity["recipe_hash"]
+    parent_hash = recipe_reference(recipe)
     base_recipe = read_json(sample / "scene_recipe.json")
-    if base_recipe.get("identity", {}).get("recipe_hash") != parent_hash:
-        raise ValueError(f"base sample recipe hash mismatch: {sample_id}")
+    if recipe_reference(base_recipe) != parent_hash:
+        raise ValueError(f"base sample recipe identity mismatch: {sample_id}")
     if recipe.get("background_protocol", {}).get("mode") != "core":
         return {"sample_id": sample_id, "status": "skipped_non_core"}
 
     primary_seed = int(recipe["seeds"]["render"])
-    second_seed = stable_seed(sample_id, "noise_estimate_render_seed_2") & 0x7FFFFFFF
+    second_seed = primary_seed + 1 if recipe.get('schema_version') == '1.2' else stable_seed(sample_id, "noise_estimate_render_seed_2") & 0x7FFFFFFF
     if second_seed == primary_seed:
         second_seed = (second_seed + 1) & 0x7FFFFFFF
     root = sample / "noise_estimate"
@@ -104,14 +104,17 @@ def _noise_job(recipe_path: Path, run: Path, gpu: dict[str, Any], *, resume: boo
 
     if resume and all((output / name).is_file() for name in JOINT_OUTPUTS) and stats_path.is_file():
         previous = read_json(stats_path)
-        if previous.get("source_recipe_hash") == parent_hash and previous.get("second_seed") == second_seed:
+        if previous.get(reference_field(recipe,'source_')) == parent_hash and previous.get("second_seed") == second_seed:
             return {"sample_id": sample_id, "status": "resumed", "second_seed": second_seed,
                     "noise": previous.get("statistics")}
 
     derived = copy.deepcopy(recipe)
     derived["seeds"]["render"] = second_seed
-    derived["identity"].pop("recipe_hash", None)
-    derived["identity"]["recipe_hash"] = canonical_hash(derived)
+    if recipe.get('schema_version') == '1.2':
+        derived['identity']['recipe_id'] = parent_hash + '.seed2'
+    else:
+        derived["identity"].pop("recipe_hash", None)
+        derived["identity"]["recipe_hash"] = canonical_hash(derived)
     write_json(derived_path, derived)
     run_variant(derived_path, output, "joint", gpu_uuid=gpu["uuid"])
 
@@ -122,8 +125,8 @@ def _noise_job(recipe_path: Path, run: Path, gpu: dict[str, Any], *, resume: boo
     statistics = estimate_noise(p1, p2, a1, a2)
     record = {
         "sample_id": sample_id,
-        "source_recipe_hash": parent_hash,
-        "seed2_recipe_hash": derived["identity"]["recipe_hash"],
+        reference_field(recipe,'source_'): parent_hash,
+        reference_field(recipe,'seed2_'): recipe_reference(derived),
         "primary_seed": primary_seed,
         "second_seed": second_seed,
         "gpu": gpu,

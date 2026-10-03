@@ -113,8 +113,10 @@ def main():
     if not math.isfinite(extent) or extent<=1e-8: raise RuntimeError("selected GLB has degenerate bounds")
     scale=.20/extent; translate=[-(lo[0]+hi[0])/2,-(lo[1]+hi[1])/2,-lo[2]]
     center=[(lo[i]+hi[i])/2 for i in range(3)]
-    distances=sorted(int(round(math.dist(p,center)/extent*10000)) for p in world)
-    fingerprint=hashlib.sha256(json.dumps({"vertices":len(world),"triangles":triangles,"radial":distances},separators=(",",":")).encode()).hexdigest()
+    fingerprint=None
+    if '--no-fingerprint' not in sys.argv:
+        distances=sorted(int(round(math.dist(p,center)/extent*10000)) for p in world)
+        fingerprint=hashlib.sha256(json.dumps({"vertices":len(world),"triangles":triangles,"radial":distances},separators=(",",":")).encode()).hexdigest()
     materials=[]; images={}; image_nodes=0; linked_basecolor_maps=0
     for material in bpy.data.materials:
         used=any(material in o.data.materials[:] for o in meshes)
@@ -136,7 +138,7 @@ def main():
         document,external=gltf_document(source)
     else:
         document,external=None,obj_dependencies(source)
-    digest=hashlib.sha256(source.read_bytes()).hexdigest()
+    digest=None if '--no-fingerprint' in sys.argv else hashlib.sha256(source.read_bytes()).hexdigest()
     largest=max(hi[i]-lo[i] for i in range(3)); matrix=[[scale,0,0,scale*translate[0]],[0,scale,0,scale*translate[1]],[0,0,scale,scale*translate[2]],[0,0,0,1]]
     result={"source_path":str(source),"source_sha256":digest,"source_bytes":source.stat().st_size,
         "format":source.suffix.lower().lstrip("."),"glb_version":2 if source.suffix.lower()==".glb" and document else None,"mesh_count":len(meshes),

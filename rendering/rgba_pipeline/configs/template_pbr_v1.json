@@ -1,0 +1,628 @@
+{
+  "templates": {
+    "blue_wall": {
+      "id": "blue_wall",
+      "blend_file": "assets/scenes/blue_wall/blue_wall.blend",
+      "frame": 5,
+      "remove_objects": [
+        "Camera_01",
+        "Camera_01_strap",
+        "CheeseBox_01",
+        "CheeseBox_01_lid"
+      ],
+      "slots": {
+        "left": {
+          "position": [
+            0.05,
+            -0.11,
+            0.862
+          ],
+          "max_size_m": 0.3
+        },
+        "right": {
+          "position": [
+            0.35,
+            -0.09,
+            0.862
+          ],
+          "max_size_m": 0.22
+        }
+      },
+      "camera": {
+        "location": [
+          0.62,
+          -0.72,
+          1.11
+        ],
+        "look_at": [
+          0.2,
+          -0.1,
+          0.932
+        ],
+        "lens_mm": 50,
+        "sensor_width_mm": 36,
+        "clip_start": 0.01,
+        "clip_end": 100
+      },
+      "lights": [
+        {
+          "id": "hero_fill",
+          "type": "AREA",
+          "location": [
+            0.1,
+            -0.6,
+            1.7
+          ],
+          "energy": 12,
+          "size": 0.75
+        }
+      ],
+      "material_presets": {
+        "original": {
+          "id": "original",
+          "edits": []
+        },
+        "muted_wall": {
+          "id": "muted_wall",
+          "edits": [
+            {
+              "objects": [
+                "Room"
+              ],
+              "materials": [
+                "*Wall*",
+                "*wall*"
+              ],
+              "base_color_tint": [
+                0.72,
+                0.82,
+                0.94
+              ]
+            }
+          ]
+        },
+        "weathered_wood": {
+          "id": "weathered_wood",
+          "edits": [
+            {
+              "objects": [
+                "Sideboard_01"
+              ],
+              "materials": [
+                "Sideboard_01"
+              ],
+              "texture_size_m": 0.65,
+              "maps": {
+                "base_color": "assets/materials/wood_table_worn/wood_table_worn_diff_2k.jpg",
+                "roughness": "assets/materials/wood_table_worn/wood_table_worn_rough_2k.jpg",
+                "normal": "assets/materials/wood_table_worn/wood_table_worn_nor_gl_2k.jpg"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "pawn_shop": {
+      "id": "pawn_shop",
+      "blend_file": "assets/scenes/pawn_shop/pawn_shop.blend",
+      "frame": 5,
+      "remove_objects": [
+        "marble_bust_01",
+        "potted_plant_04"
+      ],
+      "slots": {
+        "left": {
+          "position": [
+            4.96,
+            -0.37,
+            0.687
+          ],
+          "max_size_m": 0.3
+        },
+        "right": {
+          "position": [
+            5.22,
+            -0.34,
+            0.687
+          ],
+          "max_size_m": 0.2
+        }
+      },
+      "camera": {
+        "location": [
+          4.55,
+          -1.13,
+          1.14
+        ],
+        "look_at": [
+          5.075,
+          -0.34,
+          0.785
+        ],
+        "lens_mm": 55,
+        "sensor_width_mm": 36,
+        "clip_start": 0.01,
+        "clip_end": 100
+      },
+      "lights": [
+        {
+          "id": "hero_fill",
+          "type": "AREA",
+          "location": [
+            4.6,
+            -0.8,
+            1.6
+          ],
+          "energy": 10,
+          "size": 0.6
+        }
+      ],
+      "exposure": 0.5,
+      "material_presets": {
+        "original": {
+          "id": "original",
+          "edits": []
+        },
+        "warm_wall": {
+          "id": "warm_wall",
+          "edits": [
+            {
+              "objects": [
+                "wall_*"
+              ],
+              "materials": [
+                "*plaster*"
+              ],
+              "base_color_tint": [
+                1,
+                0.87,
+                0.7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "the_shed": {
+      "id": "the_shed",
+      "blend_file": "assets/scenes/the_shed/the_shed/the_shed.blend",
+      "frame": 5,
+      "remove_objects": [
+        "shed_dust_scatter",
+        "metal_tool_chest*",
+        "vintage_hand_drill*",
+        "wooden_hammer_01.001",
+        "ratchet_wrench.002",
+        "hand_plane_no4.001",
+        "measuring_tape_01.002"
+      ],
+      "slots": {
+        "left": {
+          "position": [
+            0.6,
+            -0.57,
+            0.84
+          ],
+          "max_size_m": 0.36
+        },
+        "right": {
+          "position": [
+            0.6,
+            -0.1,
+            0.84
+          ],
+          "max_size_m": 0.25
+        }
+      },
+      "camera": {
+        "location": [
+          -0.55,
+          -0.94,
+          1.28
+        ],
+        "look_at": [
+          0.6,
+          -0.35,
+          0.99
+        ],
+        "lens_mm": 50,
+        "sensor_width_mm": 36,
+        "clip_start": 0.01,
+        "clip_end": 100
+      },
+      "lights": [
+        {
+          "id": "hero_fill",
+          "type": "AREA",
+          "location": [
+            -0.2,
+            -0.35,
+            1.75
+          ],
+          "energy": 25,
+          "size": 0.65
+        }
+      ],
+      "exposure": 0,
+      "material_presets": {
+        "original": {
+          "id": "original",
+          "edits": []
+        },
+        "warm_bench": {
+          "id": "warm_bench",
+          "edits": [
+            {
+              "objects": [
+                "WoodenTable_03*"
+              ],
+              "materials": [
+                "*"
+              ],
+              "base_color_tint": [
+                1,
+                0.85,
+                0.65
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "samples": [
+    {
+      "id": "T01_camera",
+      "template": "blue_wall",
+      "category": "environmental_influence",
+      "mode": "core",
+      "material_preset": "original",
+      "assets": [
+        {
+          "id": "subject",
+          "asset_id": "texverse_02",
+          "slot": "left",
+          "rotation": [
+            0,
+            0,
+            2.0
+          ]
+        },
+        {
+          "id": "companion",
+          "asset_id": "texverse_16",
+          "slot": "right",
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "intervention": {
+        "kind": "remove_environment",
+        "object": "environment",
+        "roi_object_ids": [
+          "subject",
+          "companion"
+        ]
+      }
+    },
+    {
+      "id": "T02_coffee",
+      "template": "pawn_shop",
+      "category": "reflection_color_spill",
+      "mode": "core",
+      "render_overrides": {
+        "clamp_direct": 2.0,
+        "clamp_indirect": 2.0
+      },
+      "material_preset": "original",
+      "assets": [
+        {
+          "id": "subject",
+          "asset_id": "texverse_13",
+          "slot": "left",
+          "rotation": [
+            0,
+            0,
+            -0.5
+          ]
+        },
+        {
+          "id": "neighbor",
+          "asset_id": "texverse_14",
+          "slot": "right",
+          "location": [5.105, -0.435, 0.687],
+          "size_m": 0.15,
+          "rotation": [
+            0,
+            0,
+            2.1
+          ]
+        }
+      ],
+      "intervention": {
+        "kind": "neutral_color",
+        "object": "neighbor",
+        "value": [
+          0.5,
+          0.5,
+          0.5,
+          1
+        ],
+        "roi_object_ids": [
+          "subject"
+        ]
+      }
+    },
+    {
+      "id": "T03_workbench",
+      "template": "the_shed",
+      "category": "environmental_influence",
+      "mode": "core",
+      "material_preset": "original",
+      "assets": [
+        {
+          "id": "subject",
+          "asset_id": "texverse_01",
+          "slot": "left",
+          "rotation": [
+            0,
+            0,
+            -0.3
+          ]
+        },
+        {
+          "id": "companion",
+          "asset_id": "texverse_09",
+          "slot": "right",
+          "rotation": [
+            0,
+            0,
+            -0.6
+          ]
+        }
+      ],
+      "intervention": {
+        "kind": "remove_environment",
+        "object": "environment",
+        "roi_object_ids": [
+          "subject",
+          "companion"
+        ]
+      }
+    },
+    {
+      "id": "T04_glass",
+      "template": "blue_wall",
+      "category": "glass_liquid",
+      "mode": "physical",
+      "material_preset": "original",
+      "exposure": 0.15,
+      "camera": {
+        "location": [
+          0.42,
+          -0.75,
+          1.15
+        ],
+        "look_at": [
+          0.16,
+          -0.06,
+          0.952
+        ],
+        "lens_mm": 65,
+        "sensor_width_mm": 36,
+        "clip_start": 0.01,
+        "clip_end": 100
+      },
+      "assets": [
+        {
+          "id": "orange",
+          "asset_id": "texverse_07",
+          "slot": "right",
+          "location": [
+            0.19,
+            0.015,
+            0.862
+          ],
+          "size_m": 0.1,
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "procedural_objects": [
+        {
+          "id": "cup",
+          "role": "procedural",
+          "geometry": {
+            "type": "cup",
+            "outer_radius": 0.047,
+            "height": 0.145,
+            "wall": 0.0025,
+            "bottom": 0.003
+          },
+          "transform": {
+            "location": [
+              0.13,
+              -0.1,
+              0.862
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "material": {
+            "preset": "glass",
+            "ior": 1.45,
+            "roughness": 0.025
+          },
+          "semantic_object": "clear glass tumbler"
+        },
+        {
+          "id": "liquid",
+          "role": "procedural",
+          "geometry": {
+            "type": "liquid",
+            "radius": 0.0439,
+            "height": 0.091
+          },
+          "transform": {
+            "location": [
+              0.13,
+              -0.1,
+              0.8655
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "material": {
+            "preset": "liquid",
+            "ior": 1.333,
+            "roughness": 0.0,
+            "absorption_color": [
+              0.72,
+              0.9,
+              1
+            ],
+            "absorption_density": 0.1
+          },
+          "semantic_object": "clear water"
+        },
+        {
+          "id": "straw",
+          "role": "procedural",
+          "geometry": {
+            "type": "straw",
+            "radius": 0.0035,
+            "points": [
+              [
+                -0.02,
+                0,
+                0.012
+              ],
+              [
+                0.012,
+                0,
+                0.155
+              ],
+              [
+                0.05,
+                0,
+                0.19
+              ]
+            ]
+          },
+          "transform": {
+            "location": [
+              0.13,
+              -0.1,
+              0.862
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "material": {
+            "preset": "opaque_principled",
+            "base_color": [
+              0.85,
+              0.025,
+              0.015,
+              1
+            ],
+            "roughness": 0.3
+          },
+          "semantic_object": "red bent straw"
+        }
+      ],
+      "relations": [
+        {
+          "type": "contains",
+          "container": "cup",
+          "content": "liquid",
+          "wall_gap_m": 0.0006
+        },
+        {
+          "type": "contains",
+          "container": "cup",
+          "content": "straw"
+        }
+      ],
+      "intervention": {
+        "kind": "translate",
+        "object": "cup",
+        "offset": [
+          0.1,
+          0,
+          0
+        ],
+        "roi_object_ids": [
+          "cup"
+        ]
+      }
+    },
+    {
+      "id": "T05_camera_wood",
+      "template": "blue_wall",
+      "category": "environmental_influence",
+      "mode": "core",
+      "material_preset": "weathered_wood",
+      "assets": [
+        {
+          "id": "subject",
+          "asset_id": "texverse_02",
+          "slot": "left",
+          "rotation": [
+            0,
+            0,
+            2.0
+          ]
+        },
+        {
+          "id": "companion",
+          "asset_id": "texverse_16",
+          "slot": "right",
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "intervention": {
+        "kind": "remove_environment",
+        "object": "environment",
+        "roi_object_ids": [
+          "subject",
+          "companion"
+        ]
+      }
+    }
+  ]
+}
